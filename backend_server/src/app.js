@@ -7,19 +7,28 @@ const swaggerSpec = require('../swagger');
 // Initialize express app
 const app = express();
 
+// CORS: allow frontend on 3000 and same-origin during docs/openapi generation
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  '*', // fallback
+];
 app.use(cors({
-  origin: '*',
+  origin: (origin, cb) => cb(null, true),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.set('trust proxy', true);
-app.use('/docs', swaggerUi.serve, (req, res, next) => {
-  const host = req.get('host');           // may or may not include port
-  let protocol = req.protocol;          // http or https
 
+// Swagger docs with dynamic server url
+app.use('/docs', swaggerUi.serve, (req, res, next) => {
+  const host = req.get('host');
+  let protocol = req.protocol;
   const actualPort = req.socket.localPort;
   const hasPort = host.includes(':');
-  
+
   const needsPort =
     !hasPort &&
     ((protocol === 'http' && actualPort !== 80) ||
@@ -46,10 +55,12 @@ app.use('/', routes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  // eslint-disable-next-line no-console
+  console.error(err && err.stack ? err.stack : err);
+  const status = err && err.status ? err.status : 500;
+  res.status(status).json({
     status: 'error',
-    message: 'Internal Server Error',
+    message: err && err.message ? err.message : 'Internal Server Error',
   });
 });
 
