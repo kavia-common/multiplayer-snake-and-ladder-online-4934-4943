@@ -1,0 +1,4 @@
+{
+    "command": "npm install",
+    "working_directory": "/home/kavia/workspace/code-generation/multiplayer-snake-and-ladder-online-4934-4943/backend_server"
+}
